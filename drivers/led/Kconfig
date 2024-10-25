@@ -1,0 +1,11 @@
+# Copyright (c) 2023 Phytec Messtechnik GmbH
+# SPDX-License-Identifier: Apache-2.0
+
+config LP55281
+	bool "LP55281 LED driver"
+	default y
+	depends on DT_HAS_TI_LP55281_ENABLED
+	select I2C
+	help
+	  Enable LED driver for LP55281. LP55281 LED driver has 12 channels.
+	  Each channel can drive up to 40 mA per LED. This driver supports SPI for control.

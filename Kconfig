@@ -1,0 +1,5 @@
+menu "LP55281 LED driver"
+
+rsource "drivers/Kconfig"
+
+endmenu
