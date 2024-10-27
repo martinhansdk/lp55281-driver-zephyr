@@ -56,7 +56,7 @@ struct lp55281_config {
 
 static int lp55281_write_byte(const struct spi_dt_spec *dev, uint8_t address, uint8_t value) {
 	uint8_t tx_buffer[2] = {address << 1 | 0x1, value};
-	struct spi_buf tx_spi_buf		= {.buf = (void *)&tx_buffer, .len = 1};
+	struct spi_buf tx_spi_buf		= {.buf = (void *)&tx_buffer, .len = sizeof(tx_buffer)};
 	struct spi_buf_set tx_spi_buf_set 	= {.buffers = &tx_spi_buf, .count = 1};
 
 	return spi_write_dt(dev, &tx_spi_buf_set);
