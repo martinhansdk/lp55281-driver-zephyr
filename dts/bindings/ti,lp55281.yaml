@@ -1,0 +1,5 @@
+description: TI LP55281 LED
+
+compatible: "ti,lp55281"
+
+include: spi-device.yaml
