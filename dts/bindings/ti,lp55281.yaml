@@ -2,4 +2,55 @@ description: TI LP55281 LED
 
 compatible: "ti,lp55281"
 
-include: spi-device.yaml
+include: ["spi-device.yaml", "led-controller.yaml"]
+
+
+properties:
+
+  boost-frequency:
+    type: int
+    default: 2000000
+    description: The boost converter frequency. 0 disables the boost converter.
+    enum:
+      - 0
+      - 1000000
+      - 1670000
+      - 2000000
+
+  pwm-frequency:
+    type: int
+    default: 10000
+    description: The PWM frequency in Hz.
+    enum:
+      - 10000
+      - 20000
+      - 40000
+
+  boost-voltage:
+    type: int
+    default: 5000
+    description: The boost voltage in mV.
+    enum:
+      - 4000
+      - 4250
+      - 4400
+      - 4550
+      - 4700
+      - 4850
+      - 5000
+      - 5150
+      - 5300
+  
+  autoload:
+    type: boolean
+    description: "Disabling increases the efficiency at light loads, but the downside is that pulse skipping will occur. The boost converter must be stopped when there is no load to
+minimize the current consumption."
+
+child-binding:
+  properties:
+    label:
+      required: true
+    index:
+      required: true
+    color-mapping:
+      required: true
