@@ -4,7 +4,6 @@ compatible: "ti,lp55281"
 
 include: ["spi-device.yaml", "led-controller.yaml"]
 
-
 properties:
 
   boost-frequency:
@@ -54,3 +53,7 @@ child-binding:
       required: true
     color-mapping:
       required: true
+    led-current:
+      default: [3, 3, 3]
+      type: array
+      description: "The current setting to use for each color in percentage of the maximum current. 0=25% of max, 1=50% of max, 2=75% of max, 3=max"

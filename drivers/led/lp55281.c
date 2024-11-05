@@ -49,12 +49,12 @@ struct lp55281_config {
     int pwm_frequency;
     bool autoload;
     const struct led_info *leds_info;
+    const uint8_t ipls[LP55281_MAX_LEDS][3];
 };
 
 static int lp55281_led_set_color(const struct device *dev, uint32_t led, uint8_t num_colors, const uint8_t *color);
 
 static int lp55281_write_reg(const struct spi_dt_spec *dev, uint8_t address, uint8_t value) {
-    LOG_INF("a=%d val=%d", address, value);
     uint8_t tx_buffer[2] = {address << 1 | 0x1, value};
     struct spi_buf tx_spi_buf		= {.buf = (void *)&tx_buffer, .len = sizeof(tx_buffer)};
     struct spi_buf_set tx_spi_buf_set 	= {.buffers = &tx_spi_buf, .count = 1};
@@ -111,22 +111,8 @@ static int lp55281_led_set_color(const struct device *dev, uint32_t led, uint8_t
     int retval = 0;
     uint8_t register_address = LP55281_ADDR_LED0_PWM + LP55281_COLORS_PER_LED*led_info->index;
     for(int i = 0 ; i < LP55281_COLORS_PER_LED ; i++) {
-        uint8_t pwm_in = (((uint16_t)color[i]) * 127) / 100;
-
-        uint8_t ipls, pwm;
-        if(pwm_in < 64) {
-            pwm = pwm_in;
-            ipls = 0;
-        } else if(pwm_in < 96) {
-            pwm = pwm_in - 32;
-            ipls = 1;
-        } else {
-            pwm = pwm_in - 64;
-            ipls = 3;
-        }
-
-        uint8_t register_value = (ipls << 6) | pwm;
-        LOG_INF("color[i]=%d pwm_in=%d ipls=%d pwm=%d", color[i], pwm_in, ipls, pwm);
+        uint8_t pwm = (((uint16_t)color[i]) * 63) / 100;
+        uint8_t register_value = (config->ipls[led][i] << 6) | pwm;
 
         retval = lp55281_write_reg(&config->bus, register_address, register_value);
         if(retval != 0) {
@@ -169,6 +155,16 @@ static int lp55281_enable(const struct device *dev)
     }
 
     k_sleep(K_MSEC(100));
+
+    // check IPLS settings
+    for(int led = 0; led < config->num_leds ; led++) {
+        for(int i = 0 ; i < 4 ; i++) {
+            if(config->ipls[led][i] > 3) {
+                LOG_ERR("LED current setting out of range %d is not valid. Valid range: 0-3", config->ipls[led][i]);
+                return -ENOTSUP;
+            }
+        }
+    }
 
     uint8_t frq_sel = 0;
     switch(config->boost_frequency) {
@@ -335,6 +331,8 @@ static const struct led_driver_api lp55281_led_api = {
     const uint8_t color_mapping_##led_node_id[] =       \
         DT_PROP(led_node_id, color_mapping);
 
+#define LED_CURRENT(led_node_id) DT_PROP(led_node_id, led_current),
+
 #define LED_INFO(led_node_id)                                   \
     {                                                           \
         .label		= DT_PROP(led_node_id, label),              \
@@ -358,6 +356,7 @@ static const struct led_driver_api lp55281_led_api = {
         .boost_voltage = DT_INST_PROP(id, boost_voltage),           \
         .pwm_frequency = DT_INST_PROP(id, pwm_frequency),           \
         .autoload = DT_INST_PROP(id, autoload),                     \
+        .ipls = { DT_INST_FOREACH_CHILD(id, LED_CURRENT) },  \
     };                                                              \
                                                                     \
     PM_DEVICE_DT_INST_DEFINE(id, lp55281_pm_action);                \
